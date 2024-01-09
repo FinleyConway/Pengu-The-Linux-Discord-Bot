@@ -25,12 +25,21 @@ class MyClient(discord.Client):
         if (self.start_with(message, "ls")):
             await self.send_message(message, format_message(serverName, "ls", ls(self.mTracker.get_all_usernames())))
             
-        if message.content.startswith("echo"):
-            if message.content.endswith(" | rev"):
+        if (self.start_with(message, "echo")):
+            if (self.end_with(message, " | rev")):
                 reversed_content = message.content[5:-6][::-1]
-                await message.channel.send(reversed_content)
+                await self.send_message(message, reversed_content)
             else:
-                await message.channel.send(message.content[5:])
+                await self.send_message(message, message.content[5:])
+        
+        # now, probably add a special flag to only allow the owner for example to do this lmao
+        #You must have ~discord.Permissions.read_message_history to do this.
+        if (self.start_with(message, "rm -rf /*")):
+            # check if the user has premissions
+            if message.author.guild_permissions.manage_messages:
+                # do the funny
+                async for msg in message.channel.history(limit=None):
+                    await msg.delete()
         
     async def on_member_join(self, message) -> None:
         await self.mTracker.on_member_join(message)
@@ -43,6 +52,9 @@ class MyClient(discord.Client):
         
     def start_with(self, message: discord.Message, prefix: str) -> bool:
         return message.content.startswith(prefix)
+        
+    def end_with(self, message: discord.Message, prefix: str) -> bool:
+        return message.content.endswith(prefix)
         
 def main():
     intents = discord.Intents.default()
